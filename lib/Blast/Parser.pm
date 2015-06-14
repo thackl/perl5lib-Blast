@@ -3,10 +3,7 @@ package Blast::Parser;
 use warnings;
 use strict;
 
-# preference libs in same folder over @INC
-use lib '../';
-
-#use Blast::Feature;
+use Blast::Hsp;
 
 our $VERSION = '0.1.0';
 

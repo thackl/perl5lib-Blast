@@ -5,7 +5,7 @@ use strict;
 
 use Blast::Hsp;
 
-our $VERSION = '0.1.0';
+our $VERSION = '0.2.0';
 
 =head1 NAME
 
@@ -20,6 +20,12 @@ Parser module for Blast tsv files.
 =head1 SYNOPSIS
 
 =cut
+
+=head1 Class Attributes
+
+=cut
+
+my $BUFFER; # line buffer
 
 =head1 Constructor METHOD
 
@@ -91,8 +97,7 @@ sub DESTROY{
 
 =head2 next_hsp
 
-Loop through gff file and return next 'Blast::Hsp' object (meeting the
- 'is' criteria if specified).
+Return next HSP (meeting conditions).
 
 =cut
 
@@ -100,11 +105,37 @@ sub next_hsp{
     my ($self) = @_;
     my $fh = $self->{fh};
 
-    while ( <$fh> ) {
+    while ( my $l = _read_buffer() // <$fh> ) {
         next if /^#/;
 
         # return gff hsp object
-        my $hsp = Blast::Hsp->new($_);
+        my $hsp = Blast::Hsp->new($l);
+        $self->eval_hsp($hsp) || next;
+        return $hsp;
+    }
+    return;
+}
+
+=head2 next_query_hsp
+
+Return next HSP from same query (meeting conditions).
+
+NOTE: currently only works on -outfmt 7 derivates.
+
+=cut
+
+sub next_query_hsp{
+    my ($self) = @_;
+    my $fh = $self->{fh};
+
+    while ( my $l = _read_buffer() // <$fh> ) {
+        if ($l =~ /^#/){
+            $BUFFER = $l;
+            return;
+        }
+
+        # return gff hsp object
+        my $hsp = Blast::Hsp->new($l);
         $self->eval_hsp($hsp) || next;
         return $hsp;
     }
@@ -112,24 +143,30 @@ sub next_hsp{
 }
 
 
-=head2 next_hit
+=head2 next_query
 
-NOTE: Not yet implemented!
+NOTE: only works on outfmt 7
 
 =cut
 
-sub next_hit{
+sub next_query{
     my ($self) = @_;
     my $fh = $self->{fh};
-    
-    die "not yet implemented";
-    
-    while (<$fh>) {
-        next if /^\s*$/;
-        return $_ if /^##/
+    my $head = undef;
+    OUTER: while (my $l = _read_buffer() // <$fh>) {
+        next unless $l =~ /^#/;
+        $head = $l;
+        while (<$fh>) {
+            if (/^#/) {
+                $head.=$_
+            }else {
+                $BUFFER = $_;
+                last OUTER;
+            }
+        }
     }
     #eof
-    return;
+    return $head;
 }
 
 
@@ -229,6 +266,24 @@ sub eval_hsp{
 }
 
 ##----------------------------------------------------------------------------##
+
+=head1 Private METHODS
+
+=head2 _read_buffer
+
+Get buffer content, clear buffer
+
+=cut
+
+sub _read_buffer{
+    if ( defined($BUFFER) ){
+        my $buffer = $BUFFER;
+        $BUFFER = undef;
+        return $buffer;
+    }else {
+        return;
+    }
+}
 
 =head1 AUTHOR
 

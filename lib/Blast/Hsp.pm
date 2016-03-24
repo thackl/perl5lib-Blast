@@ -5,10 +5,7 @@ use strict;
 
 use overload '""' => \&string;
 
-# preference libs in same folder over @INC
-use lib '../';
-
-our $VERSION = '0.1.0';
+our $VERSION = '0.2.0';
 
 =head1 NAME
 
@@ -49,7 +46,7 @@ our @FIELDS = () ;
 Get/Set Fields of output. Accessor methods will be initialized accordingly.
 
   # read output created with -outfmt '7 qseqid sseqid qcovs'
-  my $bp = Blast::Parser->new(file => "blast.tsv"); 
+  my $bp = Blast::Parser->new(file => "blast.tsv");
   Blast::Hsp->Fields(qw(qseqid sseqid qcovs));
   while(my $hsp = $bp->next_hsp){
     print $hsp->qcovs,"\n";
@@ -118,7 +115,7 @@ sub init_field_accessors{
     foreach my $attr ( @FIELDS ) {
         my $acc = __PACKAGE__ . "::$attr";
         no strict "refs";       # So symbolic ref to typeglob works.
-    
+
         *$acc = sub {
             my ($self, $v, $force) = @_;
             if (defined $v || $force) {

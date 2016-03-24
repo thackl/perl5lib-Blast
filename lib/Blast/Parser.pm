@@ -47,6 +47,9 @@ sub new{
         fh => \*STDIN,
         file => undef,
         mode => '<',
+        fields => [qw(qseqid sseqid pident length mismatch
+                     gapopen qstart qend sstart send evalue
+                     bitscore)],  # default fields -outfmt 6/7
         # overwrite defaults
         @_,
     };
@@ -59,6 +62,8 @@ sub new{
     }
 
     bless $self, $class;
+
+    Blast::Hsp->Fields(@{$self->{fields}});
 
     return $self;
 

@@ -34,13 +34,39 @@ Class for handling blast features.
 =cut
 
 # attributes is composite field and treated specially
-our @FIELDS = qw(qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore);
+our @FIELDS = () ;
+# outfmt 6/7 defaults loaded by Blast::Parser;
+#qw(qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore);
 
 ##----------------------------------------------------------------------------##
 
 =head1 Class METHODS
 
 =head1 Constructor METHOD
+
+=head2 Fields
+
+Get/Set Fields of output. Accessor methods will be initialized accordingly.
+
+  # read output created with -outfmt '7 qseqid sseqid qcovs'
+  my $bp = Blast::Parser->new(file => "blast.tsv"); 
+  Blast::Hsp->Fields(qw(qseqid sseqid qcovs));
+  while(my $hsp = $bp->next_hsp){
+    print $hsp->qcovs,"\n";
+  }
+
+=cut
+
+sub Fields{
+    my $class = shift;
+    # TODO: reset_field_accessors - cleaner for reinits
+    if (@_<1) {
+        return @FIELDS;
+    }
+    @FIELDS = @_;
+    $class->init_field_accessors();
+    return @FIELDS;
+}
 
 =head2 new
 
@@ -68,7 +94,6 @@ sub new{
     return $self;
 }
 
-
 =head1 Object METHODS
 
 =cut
@@ -81,22 +106,28 @@ Get/Set the field values.
   $hsp->qseqid("Some_ID"); # set
   $hsp->qseqid(undef, 1); # reset
 
+
+=head init_field_accessors
+
+Create accessor methods to @FIELDS.
+
 =cut
 
-# autodefine standard accessors for @FIELDS
-foreach my $attr ( @FIELDS ) {
-    my $acc = __PACKAGE__ . "::$attr";
-    no strict "refs";          # So symbolic ref to typeglob works.
+sub init_field_accessors{
+    # autodefine standard accessors for @FIELDS
+    foreach my $attr ( @FIELDS ) {
+        my $acc = __PACKAGE__ . "::$attr";
+        no strict "refs";       # So symbolic ref to typeglob works.
     
-    *$acc = sub {
-        my ($self, $v, $force) = @_;
-        if (defined $v || $force) {
-            $self->{$attr} = $v;
+        *$acc = sub {
+            my ($self, $v, $force) = @_;
+            if (defined $v || $force) {
+                $self->{$attr} = $v;
+            }
+            return $self->{$attr};
         }
-        return $self->{$attr};
     }
 }
-
 
 =head2 string
 

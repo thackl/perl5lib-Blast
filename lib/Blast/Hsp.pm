@@ -115,7 +115,7 @@ sub init_field_accessors{
     foreach my $attr ( @FIELDS ) {
         my $acc = __PACKAGE__ . "::$attr";
         no strict "refs";       # So symbolic ref to typeglob works.
-
+        no warnings 'redefine';
         *$acc = sub {
             my ($self, $v, $force) = @_;
             if (defined $v || $force) {

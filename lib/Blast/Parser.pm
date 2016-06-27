@@ -106,7 +106,7 @@ sub next_hsp{
     my $fh = $self->{fh};
 
     while ( my $l = _read_buffer() // <$fh> ) {
-        next if /^#/;
+        next if $l =~ /^#/;
 
         # return gff hsp object
         my $hsp = Blast::Hsp->new($l);
